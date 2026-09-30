@@ -1,45 +1,102 @@
-# Figma MCP Setup & Repository
+# Figma MCP Workspace
 
-Chào mừng bạn đến với repository cấu hình và cài đặt Figma Model Context Protocol (MCP) server. Repository này cung cấp mọi thứ bạn cần để thiết lập một MCP server local, kết nối trực tiếp với Figma thông qua một plugin bridge, cho phép các AI agents (như Claude Code) tương tác (đọc/ghi) với thiết kế Figma của bạn mà không gặp phải giới hạn về API rate limit.
+Repository này cung cấp cấu hình và bộ công cụ Figma Model Context Protocol (MCP) Server, kết nối trực tiếp với Figma Desktop thông qua Local Plugin Bridge (không cần Figma API token, không lo giới hạn Rate Limit).
 
-Do repository `figma-mcp-go` bản gốc đã bị gỡ xuống, dự án này sử dụng bản thay thế tương đương bằng Rust là `figma-mcp-rust`.
+Trong workspace hiện tại đã tích hợp sẵn **3 giải pháp** tùy theo nhu cầu sử dụng:
 
-## Cấu trúc Repository
+---
 
-- `docs/`: Chứa các tài liệu hướng dẫn chi tiết. Hãy xem [`docs/figma-mcp.md`](./docs/figma-mcp.md) để biết hướng dẫn cài đặt và cấu hình đầy đủ.
-- `figma-mcp-rust/`: Mã nguồn của MCP server được viết bằng Rust (một port từ bản gốc bằng Go).
-- `figma-plugin/`: Chứa mã nguồn của plugin bridge dùng để cài đặt vào Figma Desktop.
+## 📂 Cấu trúc Repository
 
-## Hướng dẫn nhanh (Quick Start)
-
-### 1. Cài đặt Figma Plugin Bridge
-
-Để MCP server có thể giao tiếp với thiết kế của bạn, bạn cần cài đặt plugin cục bộ vào Figma Desktop:
-
-1. Mở ứng dụng **Figma Desktop**.
-2. Trên thanh menu, chọn **Plugins** → **Development** → **Import plugin from manifest**.
-3. Duyệt đến thư mục của repository này và chọn file `manifest.json` tại đường dẫn: `figma-plugin/plugin/manifest.json`.
-
-### 2. Cấu hình AI Agent (ví dụ: Claude Code)
-
-Không cần cài đặt ứng dụng server global, bạn có thể chạy trực tiếp qua `npx`. Mở terminal và chạy lệnh sau để thêm MCP server vào Claude Code:
-
-```bash
-claude mcp add figma-mcp-go -- npx @alvinindra/figma-mcp-rust@latest
+```text
+mcp_figma/
+├── figma-mcp-android/      # [DÀNH RIÊNG CHO ANDROID] MCP Server tối ưu đọc thiết kế & convert SVG -> Android VectorDrawable
+├── figma-mcp-rust/         # [ĐA DỤNG] MCP Server hỗ trợ cả READ & WRITE (73 tools: tạo node, vẽ layout, đổi màu, styles...)
+├── figma-plugin/           # Plugin bridge cho figma-mcp-rust
+├── figma-mcp-bridge/       # Plugin của gethopp/figma-mcp-bridge v0.0.22 (đã chỉnh sang port 1995)
+└── docs/
+    ├── figma-mcp.md        # Hướng dẫn chi tiết cho figma-mcp-rust
+    └── figma-mcp-android.md # Hướng dẫn chi tiết cho figma-mcp-android (Android Dev)
 ```
-*(Tên server được đặt là `figma-mcp-go` để giữ tính tương thích với các script hoặc cấu hình cũ).*
 
-### 3. Khởi chạy hệ thống
+---
 
-1. Mở một file thiết kế bất kỳ trên Figma Desktop.
-2. Chạy plugin vừa cài đặt (Từ menu: **Plugins** → **Development** → **Figma MCP**).
-3. Mở Claude Code bằng lệnh `claude` trong terminal. Claude sẽ tự động khởi chạy MCP server và kết nối với Figma thông qua plugin bridge.
+## ⚡ So sánh & Lựa chọn giải pháp
 
-## Hướng dẫn chi tiết & Xử lý sự cố
+| Tiêu chí | `figma-mcp-android` (Mới thêm) | `figma-mcp-rust` |
+| :--- | :--- | :--- |
+| **Đối tượng** | **Android Developer** (Jetpack Compose / XML) | **Mọi nền tảng** (Web, Mobile, Design System) |
+| **Quyền hạn** | **Read-Only**: Đọc thiết kế, xuất specs & asset | **Read & Write**: Đọc và tự vẽ/sửa trực tiếp trên Figma |
+| **Số lượng Tools** | **21 tools** | **73 tools** |
+| **Tính năng Android** | Có tool `convert_svg_to_android_drawable` tự động xuất XML VectorDrawable | Phải trích xuất SVG rồi convert thủ công |
+| **Tối ưu Token** | Có `get_design_context` tinh gọn cho LLM | Cung cấp raw tree / minimal detail |
+| **Chi tiết tài liệu** | 📄 [docs/figma-mcp-android.md](./docs/figma-mcp-android.md) | 📄 [docs/figma-mcp.md](./docs/figma-mcp.md) |
 
-Để xem đầy đủ các thông tin về yêu cầu hệ thống, các lệnh kiểm thử (E2E testing), và cách khắc phục các lỗi thường gặp, vui lòng tham khảo file [Hướng dẫn chi tiết](./docs/figma-mcp.md).
+---
 
-## Bảo mật và Giới hạn
+## 🚀 Hướng dẫn nhanh cho Android Dev (`figma-mcp-android`)
 
-- **Không cần Figma API Token**: Hệ thống sử dụng một local bridge trên cổng `stdio`, vì vậy không cần truy cập internet qua HTTP/WebSocket, hạn chế rủi ro bảo mật.
-- **Không giới hạn Rate Limit**: Vượt qua giới hạn gọi API của Figma, tuy nhiên vẫn cần lưu ý giới hạn request từ chính AI model bạn đang sử dụng.
+### 1. Cài đặt Plugin vào Figma Desktop
+1. Mở **Figma Desktop**.
+2. Menu: **Plugins** → **Development** → **Import plugin from manifest...**.
+3. Chọn file manifest tại: `figma-mcp-android/plugin/manifest.json`.
+4. Mở file thiết kế của bạn và bấm chạy plugin **Figma MCP Android**.
+
+### 2. Cấu hình AI Client
+Thêm cấu hình vào Client của bạn (Antigravity, Claude Code, Cursor, VS Code):
+
+```json
+{
+  "mcpServers": {
+    "figma-mcp-android": {
+      "command": "npx",
+      "args": ["-y", "@impeterwayne/figma-mcp-android@latest"]
+    }
+  }
+}
+```
+
+*Hoặc dùng lệnh Claude Code:*
+```bash
+claude mcp add figma-mcp-android -- npx -y @impeterwayne/figma-mcp-android@latest
+```
+
+Xem hướng dẫn đầy đủ và các câu prompt mẫu tại: [docs/figma-mcp-android.md](./docs/figma-mcp-android.md).
+
+---
+
+## 🌉 Figma MCP Bridge (`figma-mcp-bridge`)
+
+[gethopp/figma-mcp-bridge](https://github.com/gethopp/figma-mcp-bridge) — 40 tools đọc & ghi (`get_node`, `get_design_context`, `get_screenshot`, `create_frame`, `set_auto_layout`, animation...). Hỗ trợ nhiều file Figma cùng lúc (`list_files` + `fileKey`).
+
+> ⚠️ Bridge mặc định dùng port `1994`, **trùng với `figma-mcp-rust`**. Plugin trong repo này đã được sửa sang `ws://localhost:1995`, nên server phải chạy với `FIGMA_BRIDGE_PORT=1995` để 2 server chạy song song.
+
+### 1. Cài đặt Plugin vào Figma Desktop
+1. **Plugins** → **Development** → **Import plugin from manifest...**
+2. Chọn `figma-mcp-bridge/plugin/manifest.json`.
+3. Mở file thiết kế, chạy plugin **Figma MCP Bridge** (giữ cửa sổ plugin mở khi dùng).
+
+### 2. Cấu hình AI Client
+
+```json
+{
+  "mcpServers": {
+    "figma-bridge": {
+      "command": "npx",
+      "args": ["-y", "@gethopp/figma-mcp-bridge"],
+      "env": { "FIGMA_BRIDGE_PORT": "1995" }
+    }
+  }
+}
+```
+
+*Hoặc dùng lệnh Claude Code:*
+```bash
+claude mcp add -s user figma-bridge -e FIGMA_BRIDGE_PORT=1995 -- npx -y @gethopp/figma-mcp-bridge
+```
+
+### 3. Cập nhật plugin lên bản mới
+Tải zip ở [Releases](https://github.com/gethopp/figma-mcp-bridge/releases), giải nén đè vào `figma-mcp-bridge/`, rồi đổi lại port:
+```bash
+sed -i 's#ws://localhost:1994#ws://localhost:1995#g' figma-mcp-bridge/plugin/manifest.json figma-mcp-bridge/plugin/dist/index.html
+```

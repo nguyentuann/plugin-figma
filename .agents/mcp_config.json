@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "figma-bridge": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@gethopp/figma-mcp-bridge"
+      ],
+      "env": {
+        "FIGMA_BRIDGE_PORT": "1995"
+      }
+    },
+    "figma-mcp-android": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@impeterwayne/figma-mcp-android@latest"
+      ]
+    },
+    "figma-mcp-rust": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@alvinindra/figma-mcp-rust@latest"
+      ]
+    }
+  }
+}
